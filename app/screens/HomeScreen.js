@@ -1,107 +1,128 @@
-// screens/HomeScreen.js
-import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions, StatusBar } from "react-native";
-import { useTheme } from "styled-components/native";
-
-const { width } = Dimensions.get("window");
+import React from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAppTheme } from '../themes/theme';
 
 export default function HomeScreen({ navigation }) {
-  const theme = useTheme();
+  const theme = useAppTheme();
+
+  const imageSource =
+    theme.colors.background === '#121212'
+      ? require('../assets/3d.png')
+      : require('../assets/3.png');
+
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+      padding: theme.spacing.lg,
+      justifyContent: 'center',
+    },
+    content: {
+      alignItems: 'center',
+    },
+    image: {
+      width: 200,
+      height: 150,
+      resizeMode: 'contain',
+      marginBottom: theme.spacing.lg,
+    },
+    title: {
+      fontSize: theme.fontSize.xxl,
+      fontWeight: theme.fontWeight.bold,
+      color: theme.colors.text,
+      marginBottom: theme.spacing.sm,
+      textAlign: 'center',
+    },
+    subtitle: {
+      fontSize: theme.fontSize.md,
+      fontWeight: theme.fontWeight.normal,
+      color: theme.colors.textSecondary,
+      textAlign: 'center',
+      lineHeight: 20,
+      marginBottom: theme.spacing.lg,
+      paddingHorizontal: theme.spacing.md,
+    },
+    button: {
+      backgroundColor: theme.colors.primary,
+      paddingVertical: theme.spacing.md,
+      borderRadius: theme.borderRadius.lg,
+      alignItems: 'center',
+      width: '100%',
+      marginBottom: theme.spacing.md,
+      ...theme.shadow.small,
+    },
+    buttonText: {
+      color: theme.colors.buttonText,
+      fontSize: theme.fontSize.lg,
+      fontWeight: theme.fontWeight.semibold,
+    },
+    secondaryButton: {
+      backgroundColor: theme.colors.surface,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    secondaryButtonText: {
+      color: theme.colors.text,
+    },
+    footer: {
+      alignItems: 'center',
+      marginTop: theme.spacing.lg,
+    },
+    footerText: {
+      fontSize: theme.fontSize.sm,
+      color: theme.colors.textSecondary,
+    },
+  });
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      {/* Status Bar */}
-      <StatusBar
-        barStyle={theme.name === "dark" ? "light-content" : "dark-content"}
-        backgroundColor={theme.colors.background}
-      />
+    <SafeAreaView style={styles.container}>
+      <View style={styles.content}>
+        <Image source={imageSource} style={styles.image} />
 
-      {/* Title */}
-      <Text style={[styles.title, { color: theme.colors.primary }]}>
-        Cricket Scorer
-      </Text>
-      <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
-        Keep track of your matches easily
-      </Text>
+        <Text style={styles.title}>Welcome</Text>
+        <Text style={styles.subtitle}>
+          Create matches, track your history, and manage players with ease.
+        </Text>
 
-      {/* Buttons */}
-      <View style={styles.buttonContainer}>
-        {/* Start New Match */}
         <TouchableOpacity
-          style={[styles.button, { backgroundColor: theme.colors.primary }]}
-          onPress={() => navigation.navigate("MatchSetup")}
+          style={styles.button}
+          onPress={() => navigation.navigate('CreateMatch')}
+          activeOpacity={0.85}
         >
-          <Text style={[styles.buttonText, { color: theme.colors.textInverse }]}>
-            Start New Match
-          </Text>
+          <Text style={styles.buttonText}>Create a Match</Text>
         </TouchableOpacity>
 
-        {/* Match History */}
         <TouchableOpacity
-          style={[styles.button, { backgroundColor: theme.colors.secondary }]}
-          onPress={() => navigation.navigate("MatchHistory")}
+          style={[styles.button, styles.secondaryButton]}
+          onPress={() => navigation.navigate('History')}
+          activeOpacity={0.85}
         >
-          <Text style={[styles.buttonText, { color: theme.colors.textInverse }]}>
+          <Text style={[styles.buttonText, styles.secondaryButtonText]}>
             Match History
           </Text>
         </TouchableOpacity>
 
-        {/* Profile / Sign-In */}
         <TouchableOpacity
-          style={[
-            styles.button,
-            {
-              backgroundColor: theme.colors.highlight,
-              borderWidth: 1,
-              borderColor: theme.colors.primary,
-            },
-          ]}
-          onPress={() => navigation.navigate("Profile")}
+          style={[styles.button, styles.secondaryButton]}
+          onPress={() => navigation.navigate('Register')}
+          activeOpacity={0.85}
         >
-          <Text style={[styles.buttonText, { color: theme.colors.primary }]}>
-            Profile / Sign-In
+          <Text style={[styles.buttonText, styles.secondaryButtonText]}>
+            Register
           </Text>
         </TouchableOpacity>
+
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Powered by Unitech Forge</Text>
+        </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 20,
-  },
-  title: {
-    fontSize: 36,
-    fontWeight: "bold",
-    marginBottom: 10,
-  },
-  subtitle: {
-    fontSize: 16,
-    marginBottom: 40,
-    textAlign: "center",
-  },
-  buttonContainer: {
-    width: "100%",
-  },
-  button: {
-    width: "100%",
-    paddingVertical: 15,
-    borderRadius: 12,
-    marginBottom: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    elevation: 3, // Android shadow
-    shadowColor: "#000", // iOS shadow
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  buttonText: {
-    fontSize: 18,
-    fontWeight: "600",
-  },
-});

@@ -1,54 +1,61 @@
-// App.js
-import React, { useEffect, useState, useMemo } from "react";
-import { Appearance, LogBox, StatusBar } from "react-native";
-import { ThemeProvider } from "styled-components/native";
-import { LightTheme, DarkTheme } from "./themes/theme"; // Directly import themes
+import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { createStackNavigator } from "@react-navigation/stack";
+import { StatusBar } from "expo-status-bar";
+import { useColorScheme } from "react-native";
 
-// Screens
 import HomeScreen from "./screens/HomeScreen";
+import CreateMatchScreen from "./screens/CreateMatchScreen";
+import MatchHistoryScreen from "./screens/MatchHistoryScreen";
+import RegisterScreen from "./screens/RegisterScreen";
+import { useAppTheme } from "./themes/theme";
 
-// Ignore unnecessary warnings
-LogBox.ignoreLogs(["Setting a timer"]);
-
-const Stack = createNativeStackNavigator();
+const Stack = createStackNavigator();
 
 export default function App() {
-  // Get initial system color scheme
-  const [scheme, setScheme] = useState(Appearance.getColorScheme() || "light");
+  const theme = useAppTheme();
+  const colorScheme = useColorScheme();
 
-  // Listen to system theme changes
-  useEffect(() => {
-    const listener = ({ colorScheme }) => {
-      setScheme(colorScheme || "light");
-    };
-
-    const subscription = Appearance.addChangeListener(listener);
-    return () => subscription.remove();
-  }, []);
-
-  // Memoize theme for performance
-  const theme = useMemo(() => {
-    const currentTheme = scheme === "dark" ? DarkTheme : LightTheme;
-    console.log("📢 Current app theme:", currentTheme.name); // Log current theme
-    return currentTheme;
-  }, [scheme]);
+  // navigation theme synced with your custom theme.js
+  const navigationTheme = {
+    dark: colorScheme === "dark",
+    colors: {
+      primary: theme.colors.primary,
+      background: theme.colors.background,
+      card: theme.colors.card,
+      text: theme.colors.text,
+      border: theme.colors.border,
+      notification: theme.colors.primary,
+    },
+    fonts: {
+      regular: { fontFamily: "System", fontWeight: theme.fontWeight.normal },
+      medium: { fontFamily: "System", fontWeight: theme.fontWeight.medium },
+      bold: { fontFamily: "System", fontWeight: theme.fontWeight.bold },
+      heavy: { fontFamily: "System", fontWeight: theme.fontWeight.semibold }, // using semibold from your theme
+    },
+  };
 
   return (
-    <ThemeProvider theme={theme}>
-      {/* Set StatusBar according to theme */}
-      <StatusBar barStyle={theme.statusBar} backgroundColor={theme.colors.background} />
-
-      <NavigationContainer>
-        <Stack.Navigator
-          initialRouteName="Home"
-          screenOptions={{ headerShown: false }}
-        >
-          <Stack.Screen name="Home" component={HomeScreen} />
-          {/* Add more screens here */}
-        </Stack.Navigator>
-      </NavigationContainer>
-    </ThemeProvider>
+    <NavigationContainer theme={navigationTheme}>
+      <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
+      <Stack.Navigator
+        initialRouteName="Home"
+        screenOptions={{
+          headerStyle: {
+            backgroundColor: theme.colors.surface,
+          },
+          headerTintColor: theme.colors.text,
+          headerTitleStyle: {
+            fontWeight: theme.fontWeight.bold,
+            fontSize: theme.fontSize.lg,
+          },
+        }}
+      >
+        <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown:"" }} />
+        <Stack.Screen name="CreateMatch" component={CreateMatchScreen} options={{ title: "Create Match" }} />
+        <Stack.Screen name="History" component={MatchHistoryScreen} options={{ title: "Match History" }} />
+        <Stack.Screen name="Register" component={RegisterScreen} options={{ title: "Register" }} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
