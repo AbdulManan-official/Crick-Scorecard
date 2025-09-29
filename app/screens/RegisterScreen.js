@@ -1,151 +1,137 @@
-import React, { useState } from "react";
+import React from 'react';
 import {
   View,
+  Text,
+  Image,
   StyleSheet,
+  TouchableOpacity,
   ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-} from "react-native";
-import { Text, Button, TextInput, useTheme } from "react-native-paper";
+} from 'react-native';
+import { getThemeObjects } from '../themes/theme';
+import { useNavigation } from '@react-navigation/native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useAppTheme } from "../themes/theme";
+const RegisterScreen = ({ themeMode }) => {
+  const navigation = useNavigation();
 
-export default function RegisterScreen({ navigation }) {
-  const customTheme = useAppTheme();
-  const paperTheme = useTheme();
+  // Get both light and dark themes
+  const { lightTheme, darkTheme } = getThemeObjects();
+  const theme = themeMode === 'dark' ? darkTheme : lightTheme;
 
-  const theme = {
-    ...paperTheme,
-    colors: {
-      ...paperTheme.colors,
-      ...customTheme.colors,
+  // Select illustration image based on theme
+  const illustrationSource =
+    themeMode === 'dark'
+      ? require('../assets/2.png') // Dark mode image
+      : require('../assets/2b.png'); // Light mode image
+
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
     },
-  };
-
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [secureText, setSecureText] = useState(true);
-
-  const handleRegister = () => {
-    console.log("Registering:", { name, email, password });
-    navigation.replace("Home");
-  };
+    scrollContainer: {
+      flexGrow: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: theme.spacing.lg,
+      paddingBottom: theme.spacing.xl,
+    },
+    illustration: {
+      width: '60%',           // scale with screen width
+      maxWidth: 300,          // prevent over-expansion on tablets
+      height: undefined,      // auto-calculated from aspectRatio
+      aspectRatio: 1.2,       // keeps proper shape
+      resizeMode: 'contain',
+      marginTop: theme.spacing.xl,
+      marginBottom: theme.spacing.lg,
+      alignSelf: 'center',
+    },
+    welcomeText: {
+      fontSize: theme.fontSize.xxl,
+      fontWeight: theme.fontWeight.bold,
+      color: theme.colors.text,
+      marginBottom: theme.spacing.sm,
+      textAlign: 'center',
+    },
+    descriptionText: {
+      fontSize: theme.fontSize.md,
+      color: theme.colors.textSecondary,
+      textAlign: 'center',
+      marginBottom: theme.spacing.xl,
+      lineHeight: theme.fontSize.md * 1.6,
+      maxWidth: '90%',
+    },
+    button: {
+      width: '100%',
+      maxWidth: 400, // keeps buttons neat on large screens
+      paddingVertical: theme.spacing.md,
+      backgroundColor: theme.colors.primary,
+      borderRadius: theme.borderRadius.md,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: theme.spacing.md,
+      ...theme.shadow.small,
+    },
+    buttonText: {
+      fontSize: theme.fontSize.lg,
+      fontWeight: theme.fontWeight.bold,
+      color: theme.colors.buttonText,
+    },
+    buttonOutline: {
+      width: '100%',
+      maxWidth: 400,
+      paddingVertical: theme.spacing.md,
+      borderRadius: theme.borderRadius.md,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 2,
+      borderColor: theme.colors.primary,
+      marginBottom: theme.spacing.md,
+    },
+    buttonOutlineText: {
+      fontSize: theme.fontSize.lg,
+      fontWeight: theme.fontWeight.bold,
+      color: theme.colors.primary,
+    },
+  });
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: theme.colors.background }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
+    <SafeAreaView style={styles.container}>
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
-        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        <View style={styles.container}>
-          <Text style={[styles.title, { color: theme.colors.text }]}>
-            Create Account
-          </Text>
-          <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
-            Register to start scoring matches
-          </Text>
+        {/* Illustration Image */}
+        <Image source={illustrationSource} style={styles.illustration} />
 
-          <TextInput
-            label="Full Name"
-            value={name}
-            onChangeText={setName}
-            mode="outlined"
-            left={<TextInput.Icon icon="account" />}
-            style={[styles.input, { backgroundColor: theme.colors.surface }]}
-            placeholder="Enter your full name"
-            placeholderTextColor={theme.colors.onSurfaceVariant}
-            theme={{ colors: { primary: theme.colors.primary, text: theme.colors.text } }}
-          />
+        {/* Welcome Text */}
+        <Text style={styles.welcomeText}>Welcome</Text>
 
-          <TextInput
-            label="Email"
-            value={email}
-            onChangeText={setEmail}
-            mode="outlined"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            left={<TextInput.Icon icon="email" />}
-            style={[styles.input, { backgroundColor: theme.colors.surface }]}
-            placeholder="Enter your email"
-            placeholderTextColor={theme.colors.onSurfaceVariant}
-            theme={{ colors: { primary: theme.colors.primary, text: theme.colors.text } }}
-          />
+        {/* Description Text */}
+        <Text style={styles.descriptionText}>
+          Hi there!{"\n"}
+          We're here to help you track your scores.
+          The choice is yours! Log in or create an account.
+        </Text>
 
-          <TextInput
-            label="Password"
-            value={password}
-            onChangeText={setPassword}
-            mode="outlined"
-            secureTextEntry={secureText}
-            left={<TextInput.Icon icon="lock" />}
-            right={
-              <TextInput.Icon
-                icon={secureText ? "eye-off" : "eye"}
-                onPress={() => setSecureText(!secureText)}
-              />
-            }
-            style={[styles.input, { backgroundColor: theme.colors.surface }]}
-            placeholder="Enter your password"
-            placeholderTextColor={theme.colors.onSurfaceVariant}
-            theme={{ colors: { primary: theme.colors.primary, text: theme.colors.text } }}
-          />
+        {/* Create Account Button */}
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => navigation.navigate('SignUpScreen')}
+        >
+          <Text style={styles.buttonText}>Create Account</Text>
+        </TouchableOpacity>
 
-          <Button
-            mode="contained"
-            onPress={handleRegister}
-            style={[styles.button, { backgroundColor: theme.colors.primary }]}
-            contentStyle={{ paddingVertical: 8 }}
-            labelStyle={{ color: theme.colors.buttonText }}
-          >
-            Register
-          </Button>
-
-          <Button
-            onPress={() => navigation.navigate("Home")}
-            style={styles.link}
-            labelStyle={{ color: theme.colors.secondary }}
-          >
-            Already have an account? Login
-          </Button>
-        </View>
+        {/* Log In Button */}
+        <TouchableOpacity
+          style={styles.buttonOutline}
+          onPress={() => navigation.navigate('LoginScreen')}
+        >
+          <Text style={styles.buttonOutlineText}>Log In</Text>
+        </TouchableOpacity>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </SafeAreaView>
   );
-}
+};
 
-const styles = StyleSheet.create({
-  scrollContainer: {
-    flexGrow: 1,
-    justifyContent: "center",
-  },
-  container: {
-    flex: 1,
-    padding: 24,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "700",
-    marginBottom: 8,
-    textAlign: "center",
-  },
-  subtitle: {
-    fontSize: 16,
-    fontWeight: "400",
-    marginBottom: 24,
-    textAlign: "center",
-  },
-  input: {
-    marginBottom: 16,
-  },
-  button: {
-    marginTop: 16,
-    borderRadius: 12,
-  },
-  link: {
-    marginTop: 16,
-  },
-});
+export default RegisterScreen;
