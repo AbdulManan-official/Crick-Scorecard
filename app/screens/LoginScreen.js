@@ -8,8 +8,8 @@ import { getThemeObjects } from '../themes/theme'; // Assuming this path is corr
 const facebookIcon = require('../assets/f.png');
 const googleIcon = require('../assets/g.png');
 
-// Get screen height for responsive sizing if needed
-const { height } = Dimensions.get('window');
+// Get screen dimensions for responsive styling
+const { height, width } = Dimensions.get('window');
 
 const LoginScreen = ({ themeMode }) => {
   const navigation = useNavigation();
@@ -20,13 +20,12 @@ const LoginScreen = ({ themeMode }) => {
   const [password, setPassword] = useState('');
   const [secureText, setSecureText] = useState(true);
   const [rememberMe, setRememberMe] = useState(false);
-  
+
   // State for potential validation errors
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
 
   const handleLogin = () => {
-    // Basic validation example - you'd expand this
     let isValid = true;
     setEmailError('');
     setPasswordError('');
@@ -42,7 +41,7 @@ const LoginScreen = ({ themeMode }) => {
     if (!password.trim()) {
       setPasswordError('Password cannot be empty');
       isValid = false;
-    } else if (password.length < 6) { // Example: minimum 6 characters
+    } else if (password.length < 6) {
       setPasswordError('Password must be at least 6 characters');
       isValid = false;
     }
@@ -70,180 +69,188 @@ const LoginScreen = ({ themeMode }) => {
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
-      <KeyboardAvoidingView 
-        style={styles.keyboardAvoidingContainer} 
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoidingContainer}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        // Adjust this offset based on your design to ensure input is visible
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
-        <View style={[styles.contentContainer, { padding: theme.spacing.lg }]}>
-          {/* Welcome Back Text */}
-          <Text style={[styles.title, { color: theme.colors.text, fontSize: theme.fontSize.xxl }]}>
-            Welcome Back
-          </Text>
-          <Text
-            style={[
-              styles.subtitle,
-              {
-                color: theme.colors.textSecondary,
-                fontSize: theme.fontSize.md,
-                lineHeight: theme.lineHeight.relaxed * theme.fontSize.md,
-              },
-            ]}
-          >
-            Ready to continue your learning journey?
-          </Text>
-
-          {/* Email Input */}
-          <PaperTextInput
-            label="Email"
-            value={email}
-            onChangeText={(text) => { setEmail(text); setEmailError(''); }} // Clear error on change
-            mode="outlined"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            left={<PaperTextInput.Icon icon="email" iconColor={themeMode === 'dark' ? '#FFFFFF' : theme.colors.textSecondary} />}
-            style={[
-              styles.input, 
-              { 
-                borderRadius: theme.borderRadius.md,
-                backgroundColor: theme.colors.surfaceVariant,
-              }
-            ]}
-            contentStyle={{
-              color: themeMode === 'dark' ? '#FFFFFF' : theme.colors.text,
-            }}
-            placeholder="Enter your email"
-            placeholderTextColor={themeMode === 'dark' ? '#CCCCCC' : theme.colors.placeholder}
-            theme={inputTheme}
-            textColor={themeMode === 'dark' ? '#FFFFFF' : theme.colors.text}
-            error={!!emailError} // Show error state
-            helperText={emailError} // Display error message
-          />
-
-          {/* Password Input */}
-          <PaperTextInput
-            label="Password"
-            value={password}
-            onChangeText={(text) => { setPassword(text); setPasswordError(''); }} // Clear error on change
-            mode="outlined"
-            secureTextEntry={secureText}
-            left={<PaperTextInput.Icon icon="lock" iconColor={themeMode === 'dark' ? '#FFFFFF' : theme.colors.textSecondary} />}
-            right={
-              <PaperTextInput.Icon
-                icon={secureText ? 'eye-off' : 'eye'}
-                onPress={() => setSecureText(!secureText)}
-                iconColor={themeMode === 'dark' ? '#FFFFFF' : theme.colors.textSecondary}
-              />
-            }
-            style={[
-              styles.input, 
-              { 
-                borderRadius: theme.borderRadius.md,
-                backgroundColor: theme.colors.surfaceVariant,
-              }
-            ]}
-            contentStyle={{
-              color: themeMode === 'dark' ? '#FFFFFF' : theme.colors.text,
-            }}
-            placeholder="Enter your password"
-            placeholderTextColor={themeMode === 'dark' ? '#CCCCCC' : theme.colors.placeholder}
-            theme={inputTheme}
-            textColor={themeMode === 'dark' ? '#FFFFFF' : theme.colors.text}
-            error={!!passwordError} // Show error state
-            helperText={passwordError} // Display error message
-          />
-
-          {/* Remember Me and Forgot Password */}
-          <View style={styles.rememberForgotContainer}>
-            <View style={styles.rememberMeContainer}>
-              <Checkbox
-                status={rememberMe ? 'checked' : 'unchecked'}
-                onPress={() => setRememberMe(!rememberMe)}
-                color={theme.colors.primary}
-                uncheckedColor={themeMode === 'dark' ? '#FFFFFF' : theme.colors.textSecondary}
-              />
-              <Text style={[styles.rememberMeText, { color: theme.colors.text, fontSize: theme.fontSize.sm }]}>
-                Remember me
-              </Text>
-            </View>
-            
-            <TouchableOpacity onPress={() => navigation.navigate('ForgotPasswordScreen')}>
-              <Text
-                style={[
-                  styles.forgotPasswordText,
-                  {
-                    color: theme.colors.primary,
-                    fontSize: theme.fontSize.sm,
-                    fontWeight: theme.fontWeight.medium,
-                  },
-                ]}
-              >
-                Forgot password?
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Login Button */}
-          <Button
-            mode="contained"
-            onPress={handleLogin}
-            style={{
-              marginTop: theme.spacing.md,
-              borderRadius: theme.borderRadius.md,
-              backgroundColor: theme.colors.primary,
-              ...theme.shadow.medium,
-            }}
-            contentStyle={{ paddingVertical: theme.spacing.sm }}
-            labelStyle={{
-              color: theme.colors.buttonText,
-              fontSize: theme.fontSize.md,
-              fontWeight: theme.fontWeight.bold,
-            }}
-          >
-            Log In
-          </Button>
-
-          {/* OR Divider */}
-          <View style={styles.orContainer}>
-            <View style={[styles.line, { backgroundColor: theme.colors.textSecondary }]} />
-            <Text style={[styles.orText, { color: theme.colors.textSecondary, fontSize: theme.fontSize.sm }]}>OR</Text>
-            <View style={[styles.line, { backgroundColor: theme.colors.textSecondary }]} />
-          </View>
-
-          {/* Social Login Buttons */}
-          <Text style={[styles.signInWith, { color: theme.colors.textSecondary, fontSize: theme.fontSize.sm }]}>
-            Sign in with
-          </Text>
-          
-          <View style={styles.socialButtonsContainer}>
-            <TouchableOpacity 
-              style={[styles.socialButton, { borderColor: theme.colors.border, backgroundColor: theme.colors.surface }]} 
-              onPress={() => console.log('Facebook Login')}
-            >
-              <Image source={facebookIcon} style={styles.socialIcon} />
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.socialButton, { borderColor: theme.colors.border, backgroundColor: theme.colors.surface }]} 
-              onPress={() => console.log('Google Login')}
-            >
-              <Image source={googleIcon} style={styles.socialIcon} />
-            </TouchableOpacity>
-          </View>
-
-          {/* Sign Up Link */}
-          <View style={styles.signUpContainer}>
-            <Text style={{ color: theme.colors.text, fontSize: theme.fontSize.md }}>Don't have an account? </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('SignUpScreen')}>
-              <Text
-                style={{
-                  color: theme.colors.primary,
+        <View style={[styles.contentWrapper]}>
+          <View style={styles.contentContainer}>
+            {/* Welcome Back Text */}
+            <Text style={[styles.title, { color: theme.colors.text, fontSize: theme.fontSize.xxl }]}>
+              Welcome Back
+            </Text>
+            <Text
+              style={[
+                styles.subtitle,
+                {
+                  color: theme.colors.textSecondary,
                   fontSize: theme.fontSize.md,
-                  fontWeight: theme.fontWeight.semibold,
-                }}
+                  lineHeight: theme.lineHeight.relaxed * theme.fontSize.md,
+                },
+              ]}
+            >
+              Ready to continue your learning journey?
+            </Text>
+
+            {/* Email Input */}
+            <PaperTextInput
+              label="Email"
+              value={email}
+              onChangeText={(text) => { setEmail(text); setEmailError(''); }}
+              mode="outlined"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              left={<PaperTextInput.Icon icon="email" iconColor={themeMode === 'dark' ? '#FFFFFF' : theme.colors.textSecondary} />}
+              style={[
+                styles.input,
+                {
+                  borderRadius: theme.borderRadius.md,
+                  backgroundColor: theme.colors.surfaceVariant,
+                }
+              ]}
+              contentStyle={{
+                color: themeMode === 'dark' ? '#FFFFFF' : theme.colors.text,
+              }}
+              placeholder="Enter your email"
+              placeholderTextColor={themeMode === 'dark' ? '#CCCCCC' : theme.colors.placeholder}
+              theme={inputTheme}
+              textColor={themeMode === 'dark' ? '#FFFFFF' : theme.colors.text}
+              error={!!emailError}
+              // helperText={emailError} // HelperText takes up space, only show when there's an error
+            />
+            {!!emailError && <Text style={[styles.errorText, { color: theme.colors.error }]}>{emailError}</Text>}
+
+
+            {/* Password Input */}
+            <PaperTextInput
+              label="Password"
+              value={password}
+              onChangeText={(text) => { setPassword(text); setPasswordError(''); }}
+              mode="outlined"
+              secureTextEntry={secureText}
+              left={<PaperTextInput.Icon icon="lock" iconColor={themeMode === 'dark' ? '#FFFFFF' : theme.colors.textSecondary} />}
+              right={
+                <PaperTextInput.Icon
+                  icon={secureText ? 'eye-off' : 'eye'}
+                  onPress={() => setSecureText(!secureText)}
+                  iconColor={themeMode === 'dark' ? '#FFFFFF' : theme.colors.textSecondary}
+                />
+              }
+              style={[
+                styles.input,
+                {
+                  borderRadius: theme.borderRadius.md,
+                  backgroundColor: theme.colors.surfaceVariant,
+                }
+              ]}
+              contentStyle={{
+                color: themeMode === 'dark' ? '#FFFFFF' : theme.colors.text,
+              }}
+              placeholder="Enter your password"
+              placeholderTextColor={themeMode === 'dark' ? '#CCCCCC' : theme.colors.placeholder}
+              theme={inputTheme}
+              textColor={themeMode === 'dark' ? '#FFFFFF' : theme.colors.text}
+              error={!!passwordError}
+              // helperText={passwordError} // HelperText takes up space, only show when there's an error
+            />
+            {!!passwordError && <Text style={[styles.errorText, { color: theme.colors.error }]}>{passwordError}</Text>}
+
+
+            {/* Remember Me and Forgot Password */}
+            <View style={styles.rememberForgotContainer}>
+              <View style={styles.rememberMeContainer}>
+                <Checkbox
+                  status={rememberMe ? 'checked' : 'unchecked'}
+                  onPress={() => setRememberMe(!rememberMe)}
+                  color={theme.colors.primary}
+                  uncheckedColor={themeMode === 'dark' ? '#FFFFFF' : theme.colors.textSecondary}
+                />
+                <Text style={[styles.rememberMeText, { color: theme.colors.text, fontSize: theme.fontSize.sm }]}>
+                  Remember me
+                </Text>
+              </View>
+
+              <TouchableOpacity onPress={() => navigation.navigate('ForgotPasswordScreen')}>
+                <Text
+                  style={[
+                    styles.forgotPasswordText,
+                    {
+                      color: theme.colors.primary,
+                      fontSize: theme.fontSize.sm,
+                      fontWeight: theme.fontWeight.medium,
+                    },
+                  ]}
+                >
+                  Forgot password?
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Login Button */}
+            <Button
+              mode="contained"
+              onPress={handleLogin}
+              style={[styles.loginButton, {
+                marginTop: theme.spacing.md,
+                borderRadius: theme.borderRadius.md,
+                backgroundColor: theme.colors.primary,
+                ...theme.shadow.medium,
+              }]}
+              contentStyle={{ paddingVertical: theme.spacing.sm }}
+              labelStyle={{
+                color: theme.colors.buttonText,
+                fontSize: theme.fontSize.md,
+                fontWeight: theme.fontWeight.bold,
+              }}
+            >
+              Log In
+            </Button>
+
+            {/* OR Divider */}
+            <View style={styles.orContainer}>
+              <View style={[styles.line, { backgroundColor: theme.colors.textSecondary }]} />
+              <Text style={[styles.orText, { color: theme.colors.textSecondary, fontSize: theme.fontSize.sm }]}>OR</Text>
+              <View style={[styles.line, { backgroundColor: theme.colors.textSecondary }]} />
+            </View>
+
+            {/* Social Login Buttons */}
+            <Text style={[styles.signInWith, { color: theme.colors.textSecondary, fontSize: theme.fontSize.sm }]}>
+              Sign in with
+            </Text>
+
+            <View style={styles.socialButtonsContainer}>
+              <TouchableOpacity
+                style={[styles.socialButton, { borderColor: theme.colors.border, backgroundColor: theme.colors.surface }]}
+                onPress={() => console.log('Facebook Login')}
               >
-                Sign Up
-              </Text>
-            </TouchableOpacity>
+                <Image source={facebookIcon} style={styles.socialIcon} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.socialButton, { borderColor: theme.colors.border, backgroundColor: theme.colors.surface }]}
+                onPress={() => console.log('Google Login')}
+              >
+                <Image source={googleIcon} style={styles.socialIcon} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Sign Up Link */}
+            <View style={styles.signUpContainer}>
+              <Text style={{ color: theme.colors.text, fontSize: theme.fontSize.md }}>Don't have an account? </Text>
+              <TouchableOpacity onPress={() => navigation.navigate('SignUpScreen')}>
+                <Text
+                  style={{
+                    color: theme.colors.primary,
+                    fontSize: theme.fontSize.md,
+                    fontWeight: theme.fontWeight.semibold,
+                  }}
+                >
+                  Sign Up
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -252,35 +259,50 @@ const LoginScreen = ({ themeMode }) => {
 };
 
 const styles = StyleSheet.create({
-  safeArea: { 
-    flex: 1, 
+  safeArea: {
+    flex: 1,
   },
   keyboardAvoidingContainer: {
     flex: 1,
   },
-  contentContainer: { 
-    flex: 1, // Ensures the content takes up available space
-    justifyContent: 'center', // Centers content vertically
-    // Remove padding from here if your theme.spacing.lg is causing issues. 
-    // It's applied directly to the inline style above.
+  contentWrapper: {
+    flex: 1,
+    paddingHorizontal: 20, // Apply horizontal padding here once
+    justifyContent: 'center', // Center content vertically within the keyboard-avoiding space
   },
-  title: { 
-    fontWeight: '700', 
-    marginBottom: 8, 
-    textAlign: 'center' 
+  contentContainer: {
+    // This container will just flow its children
+    // If you need maximum width for inputs, etc., add maxWidth here
+    alignSelf: 'center', // Center content block horizontally
+    width: '100%',
+    maxWidth: 400, // Optional: Limit width on very large screens
+    paddingVertical: height * 0.02, // Add some vertical padding to content
   },
-  subtitle: { 
-    marginBottom: 32, 
-    textAlign: 'center' 
+  title: {
+    fontWeight: '700',
+    marginBottom: height * 0.01, // Responsive margin
+    textAlign: 'center',
   },
-  input: { 
-    marginBottom: 16 
+  subtitle: {
+    marginBottom: height * 0.03, // Responsive margin
+    textAlign: 'center',
+  },
+  input: {
+    marginBottom: height * 0.005, // Reduced margin to make space for error text
+    width: '100%',
+  },
+  errorText: {
+    marginBottom: height * 0.015, // Space between error and next element
+    fontSize: 12, // Standard error text size
+    textAlign: 'left',
+    paddingLeft: 12, // Align with input text
   },
   rememberForgotContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: height * 0.02, // Responsive margin
+    marginTop: height * 0.01, // Small top margin to separate from input/error
   },
   rememberMeContainer: {
     flexDirection: 'row',
@@ -292,37 +314,40 @@ const styles = StyleSheet.create({
   forgotPasswordText: {
     textAlign: 'right',
   },
-  orContainer: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    marginVertical: 24 
+  loginButton: {
+    width: '100%',
   },
-  line: { 
-    flex: 1, 
-    height: 1 
+  orContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: height * 0.03, // Responsive margin
   },
-  orText: { 
-    marginHorizontal: 16, 
+  line: {
+    flex: 1,
+    height: 1,
+  },
+  orText: {
+    marginHorizontal: 16,
     textAlign: 'center',
     fontWeight: '500'
   },
   signInWith: {
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: height * 0.02, // Responsive margin
     fontWeight: '500'
   },
-  socialButtonsContainer: { 
-    flexDirection: 'row', 
-    justifyContent: 'center', 
-    marginBottom: 16,
-    gap: 16 // Modern way to add space between items
+  socialButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: height * 0.03, // Responsive margin
+    gap: 16
   },
-  socialButton: { 
-    width: 60, 
-    height: 60, 
-    borderRadius: 12, 
-    borderWidth: 1, 
-    alignItems: 'center', 
+  socialButton: {
+    width: 60,
+    height: 60,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -330,16 +355,16 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  socialIcon: { 
-    width: 30, 
-    height: 30, 
-    resizeMode: 'contain' 
+  socialIcon: {
+    width: 30,
+    height: 30,
+    resizeMode: 'contain'
   },
-  signUpContainer: { 
-    flexDirection: 'row', 
-    justifyContent: 'center', 
-    marginTop: 'auto', // Pushes this container to the bottom when content is not full height
-    marginBottom: 0, // Ensure no extra margin at the bottom
+  signUpContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 'auto', // Pushes this container to the bottom if there's extra space
+    // No explicit marginBottom needed here as it's at the very bottom
   }
 });
 
