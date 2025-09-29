@@ -1,14 +1,19 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, KeyboardAvoidingView, Platform, Dimensions, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { TextInput as PaperTextInput, Button } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getThemeObjects } from '../themes/theme';
 
+// Import Firebase core and specific functions
+import { auth, db } from '../FirebaseConfig';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+
 const facebookIcon = require('../assets/f.png');
 const googleIcon = require('../assets/g.png');
 
-const { height } = Dimensions.get('window'); // Get screen height for responsive spacing
+const { height } = Dimensions.get('window');
 
 const SignUpScreen = ({ themeMode }) => {
   const navigation = useNavigation();
@@ -19,22 +24,98 @@ const SignUpScreen = ({ themeMode }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [secureText, setSecureText] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  const handleSignUp = () => {
-    console.log('Sign Up Pressed:', { fullName, email, password });
-    // Handle sign up logic
+  // State for validation errors
+  const [fullNameError, setFullNameError] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+
+  const handleSignUp = async () => {
+    // Reset previous errors
+    setFullNameError('');
+    setEmailError('');
+    setPasswordError('');
+
+    let isValid = true;
+
+    // Full Name Validation
+    if (!fullName.trim()) {
+      setFullNameError('Full Name is required.');
+      isValid = false;
+    }
+
+    // Email Validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email.trim()) {
+      setEmailError('Email is required.');
+      isValid = false;
+    } else if (!emailRegex.test(email.trim())) {
+      setEmailError('Please enter a valid email address.');
+      isValid = false;
+    }
+
+    // Password Validation
+    if (!password.trim()) {
+      setPasswordError('Password is required.');
+      isValid = false;
+    } else if (password.length < 8) { // Changed to 8 digits as per request
+      setPasswordError('Password must be at least 8 characters long.');
+      isValid = false;
+    }
+
+    if (!isValid) {
+      // If any validation fails, stop here and show errors
+      Alert.alert('Validation Error', 'Please correct the errors in the form.');
+      return;
+    }
+
+    setLoading(true); // Start loading
+
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password.trim());
+      const user = userCredential.user;
+
+      await setDoc(doc(db, 'Users', user.uid), {
+        uid: user.uid,
+        name: fullName.trim(),
+        email: email.trim(),
+        createdAt: new Date(),
+      });
+
+      Alert.alert('Success', 'Account created successfully!');
+      navigation.navigate('Register'); // Changed from 'LoginScreen' to 'Register'
+    } catch (error) {
+      console.error('Sign Up Error:', error.code, error.message);
+      let errorMessage = 'Failed to create an account. Please try again.';
+
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = 'This email address is already in use. Please try logging in or use a different email.';
+        setEmailError(errorMessage); // Set error for email field
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'The email address is invalid. Please enter a valid email.';
+        setEmailError(errorMessage); // Set error for email field
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = 'The password is too weak. Please choose a password with at least 8 characters.';
+        setPasswordError(errorMessage); // Set error for password field
+      }
+
+      Alert.alert('Sign Up Error', errorMessage);
+    } finally {
+      setLoading(false); // End loading
+    }
   };
 
-  // Fixed theme for PaperTextInput with proper dark mode support
   const inputTheme = {
     colors: {
-      primary: theme.colors.primary, // Active/focused border and label color
-      onSurface: themeMode === 'dark' ? '#FFFFFF' : theme.colors.text, // Label color when not focused
-      onSurfaceVariant: themeMode === 'dark' ? '#FFFFFF' : theme.colors.textSecondary, // Placeholder color
-      outline: themeMode === 'dark' ? '#555555' : theme.colors.border, // Border color when not focused
-      surface: theme.colors.surface, // Background color
-      surfaceVariant: theme.colors.surfaceVariant, // Input background
-      text: themeMode === 'dark' ? '#FFFFFF' : theme.colors.text, // Input text color
+      primary: theme.colors.primary,
+      onSurface: themeMode === 'dark' ? '#FFFFFF' : theme.colors.text,
+      onSurfaceVariant: themeMode === 'dark' ? '#FFFFFF' : theme.colors.textSecondary,
+      outline: themeMode === 'dark' ? '#555555' : theme.colors.border,
+      surface: theme.colors.surface,
+      surfaceVariant: theme.colors.surfaceVariant,
+      text: themeMode === 'dark' ? '#FFFFFF' : theme.colors.text,
+      error: theme.colors.error, // Added error color
     },
   };
 
@@ -43,8 +124,6 @@ const SignUpScreen = ({ themeMode }) => {
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingContainer}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        // Adjust the offset to ensure the input is visible.
-        // You might need to fine-tune this value.
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
         <View style={styles.contentContainer}>
@@ -68,7 +147,7 @@ const SignUpScreen = ({ themeMode }) => {
           <PaperTextInput
             label="Full Name"
             value={fullName}
-            onChangeText={setFullName}
+            onChangeText={(text) => { setFullName(text); setFullNameError(''); }} // Clear error on change
             mode="outlined"
             left={<PaperTextInput.Icon icon="account" iconColor={themeMode === 'dark' ? '#FFFFFF' : theme.colors.textSecondary} />}
             style={[
@@ -85,13 +164,16 @@ const SignUpScreen = ({ themeMode }) => {
             placeholderTextColor={themeMode === 'dark' ? '#CCCCCC' : theme.colors.placeholder}
             theme={inputTheme}
             textColor={themeMode === 'dark' ? '#FFFFFF' : theme.colors.text}
+            error={!!fullNameError} // Show error state
           />
+          {fullNameError ? <Text style={[styles.errorText, { color: theme.colors.error }]}>{fullNameError}</Text> : null}
+
 
           {/* Email */}
           <PaperTextInput
             label="Email"
             value={email}
-            onChangeText={setEmail}
+            onChangeText={(text) => { setEmail(text); setEmailError(''); }} // Clear error on change
             mode="outlined"
             keyboardType="email-address"
             autoCapitalize="none"
@@ -110,13 +192,16 @@ const SignUpScreen = ({ themeMode }) => {
             placeholderTextColor={themeMode === 'dark' ? '#CCCCCC' : theme.colors.placeholder}
             theme={inputTheme}
             textColor={themeMode === 'dark' ? '#FFFFFF' : theme.colors.text}
+            error={!!emailError} // Show error state
           />
+          {emailError ? <Text style={[styles.errorText, { color: theme.colors.error }]}>{emailError}</Text> : null}
+
 
           {/* Password */}
           <PaperTextInput
             label="Password"
             value={password}
-            onChangeText={setPassword}
+            onChangeText={(text) => { setPassword(text); setPasswordError(''); }} // Clear error on change
             mode="outlined"
             secureTextEntry={secureText}
             left={<PaperTextInput.Icon icon="lock" iconColor={themeMode === 'dark' ? '#FFFFFF' : theme.colors.textSecondary} />}
@@ -141,17 +226,21 @@ const SignUpScreen = ({ themeMode }) => {
             placeholderTextColor={themeMode === 'dark' ? '#CCCCCC' : theme.colors.placeholder}
             theme={inputTheme}
             textColor={themeMode === 'dark' ? '#FFFFFF' : theme.colors.text}
+            error={!!passwordError} // Show error state
           />
+          {passwordError ? <Text style={[styles.errorText, { color: theme.colors.error }]}>{passwordError}</Text> : null}
 
           <Button
             mode="contained"
             onPress={handleSignUp}
+            loading={loading}
+            disabled={loading} // Disable button when loading
             style={[
               styles.signUpButton,
               {
                 marginTop: theme.spacing.md,
                 borderRadius: theme.borderRadius.md,
-                backgroundColor: theme.colors.primary,
+                backgroundColor: loading ? theme.colors.textSecondary : theme.colors.primary, // Grey out button when disabled/loading
                 ...theme.shadow.medium,
               }
             ]}
@@ -162,7 +251,7 @@ const SignUpScreen = ({ themeMode }) => {
               fontWeight: theme.fontWeight.bold,
             }}
           >
-            Sign Up
+            {loading ? 'Signing Up...' : 'Sign Up'}
           </Button>
 
           <View style={styles.orContainer}>
@@ -206,24 +295,30 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   contentContainer: {
-    flex: 1, // Allow content to fill available space
-    justifyContent: 'center', // Center content vertically
-    paddingHorizontal: 20,    // Add horizontal padding
-    paddingVertical: height * 0.03, // Add some vertical padding, adjust as needed
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: height * 0.03,
   },
   title: {
     fontWeight: '700',
-    marginBottom: height * 0.01, // Responsive margin
+    marginBottom: height * 0.01,
     textAlign: 'center',
   },
   subtitle: {
-    marginBottom: height * 0.03, // Responsive margin
+    marginBottom: height * 0.03,
     textAlign: 'center',
-    paddingHorizontal: 10, // Add some horizontal padding to prevent text from touching edges
+    paddingHorizontal: 10,
   },
   input: {
-    marginBottom: height * 0.015, // Responsive margin
-    width: '100%', // Ensure inputs take full width of container
+    marginBottom: height * 0.015, // Adjusted to make space for error text
+    width: '100%',
+  },
+  errorText: {
+    marginTop: -height * 0.01, // Move error text closer to the input
+    marginBottom: height * 0.015,
+    marginLeft: 10,
+    fontSize: 12, // Smaller font for errors
   },
   signUpButton: {
     width: '100%',
@@ -231,7 +326,7 @@ const styles = StyleSheet.create({
   orContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: height * 0.02, // Responsive margin
+    marginVertical: height * 0.02,
   },
   line: {
     flex: 1,
@@ -244,7 +339,7 @@ const styles = StyleSheet.create({
   socialButtonsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: height * 0.02, // Responsive margin
+    marginBottom: height * 0.02,
   },
   socialButton: {
     width: 50,

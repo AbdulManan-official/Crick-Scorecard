@@ -1,4 +1,3 @@
-// firebaseConfig.js
 import { initializeApp } from 'firebase/app';
 import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
@@ -8,15 +7,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyDSVh3WOknXhCl-rePh1k6fOSc43acs2vo",
-  authDomain: "crickscore-e8c4c.firebaseapp.com",
-  projectId: "crickscore-e8c4c",
-  storageBucket: "crickscore-e8c4c.firebasestorage.app",
-  messagingSenderId: "269684038204",
-  appId: "1:269684038204:web:de6bff0db72bf1c7f08139",
-  measurementId: "G-CKEYGM48M4"
+  apiKey: "AIzaSyD214BUCte9u3LGq3DxNekB9hq1QiqImB0",
+  authDomain: "react-native-login-94826.firebaseapp.com",
+  projectId: "react-native-login-94826",
+  storageBucket: "react-native-login-94826.firebasestorage.app",
+  messagingSenderId: "437928362999",
+  appId: "1:437928362999:web:e745c055dd800cd43b64f2"
 };
-
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 

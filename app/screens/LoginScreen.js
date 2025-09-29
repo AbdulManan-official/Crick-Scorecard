@@ -1,15 +1,19 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, KeyboardAvoidingView, Platform, Dimensions, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { TextInput as PaperTextInput, Button, Checkbox } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getThemeObjects } from '../themes/theme'; // Assuming this path is correct
+import { getThemeObjects } from '../themes/theme';
+
+// Import Firebase core and specific functions
+import { auth } from '../FirebaseConfig'; // Import auth from your FirebaseConfig
+import { signInWithEmailAndPassword } from 'firebase/auth'; // Import signInWithEmailAndPassword
 
 const facebookIcon = require('../assets/f.png');
 const googleIcon = require('../assets/g.png');
 
 // Get screen dimensions for responsive styling
-const { height, width } = Dimensions.get('window');
+const { height } = Dimensions.get('window');
 
 const LoginScreen = ({ themeMode }) => {
   const navigation = useNavigation();
@@ -20,36 +24,85 @@ const LoginScreen = ({ themeMode }) => {
   const [password, setPassword] = useState('');
   const [secureText, setSecureText] = useState(true);
   const [rememberMe, setRememberMe] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   // State for potential validation errors
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [generalError, setGeneralError] = useState(''); // New state for general login errors
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     let isValid = true;
     setEmailError('');
     setPasswordError('');
+    setGeneralError(''); // Clear general error on new attempt
 
+    // Client-side email validation
     if (!email.trim()) {
-      setEmailError('Email cannot be empty');
+      setEmailError('Email cannot be empty.');
       isValid = false;
     } else if (!/\S+@\S+\.\S+/.test(email)) {
-      setEmailError('Invalid email format');
+      setEmailError('Please enter a valid email address.');
       isValid = false;
     }
 
+    // Client-side password validation
     if (!password.trim()) {
-      setPasswordError('Password cannot be empty');
+      setPasswordError('Password cannot be empty.');
       isValid = false;
     } else if (password.length < 6) {
-      setPasswordError('Password must be at least 6 characters');
+      setPasswordError('Password must be at least 6 characters long.');
       isValid = false;
     }
 
-    if (isValid) {
-      console.log('Login Pressed:', { email, password, rememberMe });
-      // Perform actual login API call here
-      // navigation.navigate('SomeNextScreen');
+    if (!isValid) {
+      // If any client-side validation fails, stop here
+      return;
+    }
+
+    setLoading(true); // Start loading
+
+    try {
+      await signInWithEmailAndPassword(auth, email.trim(), password.trim());
+      // If successful, navigate to the desired screen
+      Alert.alert('Success', 'Logged in successfully!');
+      // For example: navigation.navigate('HomeScreen');
+    } catch (error) {
+      // --- CHANGE HERE: Removed or commented out console.error ---
+      // console.error('Firebase Auth Error (Login):', error.code, error.message);
+      // If you truly want to hide it completely even from dev tools, ensure this line is removed.
+      // If you want it only for your own debugging, you could wrap it in an __DEV__ check:
+      // if (__DEV__) {
+      //   console.error('Firebase Auth Error (Login):', error.code, error.message);
+      // }
+
+
+      let userFriendlyMessage = 'Login failed. Please check your credentials and try again.'; // Default generic message
+
+      switch (error.code) {
+        case 'auth/invalid-email':
+          userFriendlyMessage = 'The email address is not valid.';
+          setEmailError(userFriendlyMessage);
+          break;
+        case 'auth/user-disabled':
+          userFriendlyMessage = 'This account has been disabled. Please contact support.';
+          setGeneralError(userFriendlyMessage);
+          break;
+        case 'auth/invalid-credential':
+        case 'auth/user-not-found':
+        case 'auth/wrong-password':
+          // Combine all invalid credential errors into one general message for security
+          userFriendlyMessage = 'Invalid email or password. Please try again.';
+          setEmailError(userFriendlyMessage); // Set error on email field for immediate visibility
+          setPasswordError(''); // Clear password error if it was specific, now general
+          break;
+        default:
+          userFriendlyMessage = 'An unexpected error occurred. Please try again later.';
+          setGeneralError(userFriendlyMessage);
+          break;
+      }
+    } finally {
+      setLoading(false); // End loading
     }
   };
 
@@ -72,7 +125,6 @@ const LoginScreen = ({ themeMode }) => {
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingContainer}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        // Adjust this offset based on your design to ensure input is visible
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
         <View style={[styles.contentWrapper]}>
@@ -94,11 +146,14 @@ const LoginScreen = ({ themeMode }) => {
               Ready to continue your learning journey?
             </Text>
 
+            {/* General Error Display (if any) */}
+            {!!generalError && <Text style={[styles.generalErrorText, { color: theme.colors.error }]}>{generalError}</Text>}
+
             {/* Email Input */}
             <PaperTextInput
               label="Email"
               value={email}
-              onChangeText={(text) => { setEmail(text); setEmailError(''); }}
+              onChangeText={(text) => { setEmail(text); setEmailError(''); setGeneralError(''); }}
               mode="outlined"
               keyboardType="email-address"
               autoCapitalize="none"
@@ -118,7 +173,6 @@ const LoginScreen = ({ themeMode }) => {
               theme={inputTheme}
               textColor={themeMode === 'dark' ? '#FFFFFF' : theme.colors.text}
               error={!!emailError}
-              // helperText={emailError} // HelperText takes up space, only show when there's an error
             />
             {!!emailError && <Text style={[styles.errorText, { color: theme.colors.error }]}>{emailError}</Text>}
 
@@ -127,7 +181,7 @@ const LoginScreen = ({ themeMode }) => {
             <PaperTextInput
               label="Password"
               value={password}
-              onChangeText={(text) => { setPassword(text); setPasswordError(''); }}
+              onChangeText={(text) => { setPassword(text); setPasswordError(''); setGeneralError(''); }}
               mode="outlined"
               secureTextEntry={secureText}
               left={<PaperTextInput.Icon icon="lock" iconColor={themeMode === 'dark' ? '#FFFFFF' : theme.colors.textSecondary} />}
@@ -153,7 +207,6 @@ const LoginScreen = ({ themeMode }) => {
               theme={inputTheme}
               textColor={themeMode === 'dark' ? '#FFFFFF' : theme.colors.text}
               error={!!passwordError}
-              // helperText={passwordError} // HelperText takes up space, only show when there's an error
             />
             {!!passwordError && <Text style={[styles.errorText, { color: theme.colors.error }]}>{passwordError}</Text>}
 
@@ -192,10 +245,12 @@ const LoginScreen = ({ themeMode }) => {
             <Button
               mode="contained"
               onPress={handleLogin}
+              loading={loading}
+              disabled={loading}
               style={[styles.loginButton, {
                 marginTop: theme.spacing.md,
                 borderRadius: theme.borderRadius.md,
-                backgroundColor: theme.colors.primary,
+                backgroundColor: loading ? theme.colors.textSecondary : theme.colors.primary,
                 ...theme.shadow.medium,
               }]}
               contentStyle={{ paddingVertical: theme.spacing.sm }}
@@ -205,7 +260,7 @@ const LoginScreen = ({ themeMode }) => {
                 fontWeight: theme.fontWeight.bold,
               }}
             >
-              Log In
+              {loading ? 'Logging In...' : 'Log In'}
             </Button>
 
             {/* OR Divider */}
@@ -267,42 +322,47 @@ const styles = StyleSheet.create({
   },
   contentWrapper: {
     flex: 1,
-    paddingHorizontal: 20, // Apply horizontal padding here once
-    justifyContent: 'center', // Center content vertically within the keyboard-avoiding space
+    paddingHorizontal: 20,
+    justifyContent: 'center',
   },
   contentContainer: {
-    // This container will just flow its children
-    // If you need maximum width for inputs, etc., add maxWidth here
-    alignSelf: 'center', // Center content block horizontally
+    alignSelf: 'center',
     width: '100%',
-    maxWidth: 400, // Optional: Limit width on very large screens
-    paddingVertical: height * 0.02, // Add some vertical padding to content
+    maxWidth: 400,
+    paddingVertical: height * 0.02,
   },
   title: {
     fontWeight: '700',
-    marginBottom: height * 0.01, // Responsive margin
+    marginBottom: height * 0.01,
     textAlign: 'center',
   },
   subtitle: {
-    marginBottom: height * 0.03, // Responsive margin
+    marginBottom: height * 0.03,
     textAlign: 'center',
   },
   input: {
-    marginBottom: height * 0.005, // Reduced margin to make space for error text
+    marginBottom: height * 0.005,
     width: '100%',
   },
   errorText: {
-    marginBottom: height * 0.015, // Space between error and next element
-    fontSize: 12, // Standard error text size
+    marginBottom: height * 0.015,
+    fontSize: 12,
     textAlign: 'left',
-    paddingLeft: 12, // Align with input text
+    paddingLeft: 12,
+  },
+  generalErrorText: {
+    marginBottom: height * 0.015,
+    fontSize: 14,
+    textAlign: 'center',
+    paddingHorizontal: 10,
+    fontWeight: '500',
   },
   rememberForgotContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: height * 0.02, // Responsive margin
-    marginTop: height * 0.01, // Small top margin to separate from input/error
+    marginBottom: height * 0.02,
+    marginTop: height * 0.01,
   },
   rememberMeContainer: {
     flexDirection: 'row',
@@ -320,7 +380,7 @@ const styles = StyleSheet.create({
   orContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: height * 0.03, // Responsive margin
+    marginVertical: height * 0.03,
   },
   line: {
     flex: 1,
@@ -333,13 +393,13 @@ const styles = StyleSheet.create({
   },
   signInWith: {
     textAlign: 'center',
-    marginBottom: height * 0.02, // Responsive margin
+    marginBottom: height * 0.02,
     fontWeight: '500'
   },
   socialButtonsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: height * 0.03, // Responsive margin
+    marginBottom: height * 0.03,
     gap: 16
   },
   socialButton: {
@@ -363,8 +423,7 @@ const styles = StyleSheet.create({
   signUpContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 'auto', // Pushes this container to the bottom if there's extra space
-    // No explicit marginBottom needed here as it's at the very bottom
+    marginTop: 'auto',
   }
 });
 
